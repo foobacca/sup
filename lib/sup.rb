@@ -1,6 +1,9 @@
 require 'rubygems'
+
 require 'syck'
 require 'yaml'
+YAML::ENGINE.yamler = 'syck'
+
 require 'zlib'
 require 'thread'
 require 'fileutils'
@@ -285,7 +288,8 @@ EOS
       :poll_interval => 300,
       :wrap_width => 0,
       :slip_rows => 0,
-      :col_jump => 2
+      :col_jump => 2,
+      :stem_language => "english"
     }
     if File.exists? filename
       config = Redwood::load_yaml_obj filename
