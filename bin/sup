@@ -1,14 +1,10 @@
 #!/usr/bin/env ruby
 
+$:.unshift File.join(File.dirname(__FILE__), *%w[.. lib])
+
 require 'rubygems'
 
-no_ncursesw = false
-begin
-  require 'ncursesw'
-rescue LoadError
-  require 'ncurses'
-  no_ncursesw = true
-end
+require 'ncursesw'
 
 no_gpgme = false
 begin
@@ -21,15 +17,11 @@ end
 
 require 'fileutils'
 require 'trollop'
-require "sup"; Redwood::check_library_version_against "git"
+require "sup"
 
 if ENV['SUP_PROFILE']
   require 'ruby-prof'
   RubyProf.start
-end
-
-if no_ncursesw
-  info "No 'ncursesw' gem detected. Install it for wide character support."
 end
 
 if no_gpgme
@@ -114,8 +106,6 @@ end
 ## ncurses.so that's been compiled against libncursesw. (note the w.) why
 ## this works, i have no idea. much like pretty much every aspect of
 ## dealing with curses.  cargo cult programming at its best.
-##
-## BSD users: if libc.so.6 is not found, try installing compat6x.
 require 'dl/import'
 require 'rbconfig'
 module LibC
@@ -123,6 +113,7 @@ module LibC
   setlocale_lib = case RbConfig::CONFIG['arch']
     when /darwin/; "libc.dylib"
     when /cygwin/; "cygwin1.dll"
+    when /freebsd/; "libc.so.7"
     else; "libc.so.6"
   end
 
@@ -135,9 +126,6 @@ module LibC
   rescue RuntimeError => e
     warn "cannot dlload setlocale(); ncurses wide character support probably broken."
     warn "dlload error was #{e.class}: #{e.message}"
-    if RbConfig::CONFIG['arch'] =~ /bsd/
-      warn "BSD variant detected. You may have to install a compat6x package to acquire libc."
-    end
   end
 end
 

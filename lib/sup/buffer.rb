@@ -1,11 +1,7 @@
 require 'etc'
 require 'thread'
 
-begin
-  require 'ncursesw'
-rescue LoadError
-  require 'ncurses'
-end
+require 'ncursesw'
 
 if defined? Ncurses
 module Ncurses
@@ -271,7 +267,7 @@ EOS
 
   def handle_input c
     if @focus_buf
-      if @focus_buf.mode.in_search? && c != CONTINUE_IN_BUFFER_SEARCH_KEY[0]
+      if @focus_buf.mode.in_search? && c != CONTINUE_IN_BUFFER_SEARCH_KEY.ord
         @focus_buf.mode.cancel_search!
         @focus_buf.mark_dirty
       end
@@ -713,7 +709,7 @@ EOS
     end
 
     Ncurses.mutex.lock unless opts[:sync] == false
-    Ncurses.attrset Colormap.color_for(:none)
+    Ncurses.attrset Colormap.color_for(:text_color)
     adj = @asking ? 2 : 1
     m.each_with_index do |s, i|
       Ncurses.mvaddstr Ncurses.rows - i - adj, 0, s + (" " * [Ncurses.cols - s.length, 0].max)

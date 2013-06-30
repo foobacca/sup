@@ -62,7 +62,7 @@ class Source
 
   bool_accessor :usual, :archived
   attr_reader :uri
-  attr_accessor :id
+  attr_accessor :id, :poll_lock
 
   def initialize uri, usual=true, archived=false, id=nil
     raise ArgumentError, "id must be an integer: #{id.inspect}" unless id.is_a? Fixnum if id
@@ -71,6 +71,8 @@ class Source
     @usual = usual
     @archived = archived
     @id = id
+
+    @poll_lock = Mutex.new
   end
 
   ## overwrite me if you have a disk incarnation (currently used only for sup-sync-back)
@@ -160,7 +162,7 @@ module SerializeLabelsNicely
   end
 
   def after_unmarshal!
-    @labels = Set.new(@labels.map { |s| s.to_sym })
+    @labels = Set.new(@labels.to_a.map { |s| s.to_sym })
   end
 end
 
@@ -209,9 +211,9 @@ class SourceManager
     end
   end
 
-  def save_sources fn=Redwood::SOURCE_FN
+  def save_sources fn=Redwood::SOURCE_FN, force=false
     @source_mutex.synchronize do
-      if @sources_dirty
+      if @sources_dirty || force
         Redwood::save_yaml_obj sources, fn, false, true
       end
       @sources_dirty = false
